@@ -1,0 +1,12 @@
+# bootstrap
+
+skills/qqbot/.idea/
+skills/openwrt-telegram-send-files-fix/memory/
+skills/openwrt-telegram-send-files-fix/temp/
+skills/openwrt-telegram-send-files-fix/scripts/*backup*
+skills/openwrt-telegram-send-files-fix/scripts/*lingji*
+skills/openwrt-telegram-send-files-fix/scripts/*alert*
+skills/openwrt-telegram-send-files-fix/scripts/backup-plan*.conf
+skills/openwrt-telegram-send-files-fix/TOOLS.md
+skills/openwrt-telegram-send-files-fix/AGENTS.md
+skills/openwrt-telegram-send-files-fix/USER.md

@@ -1,0 +1,15 @@
+# transient / backups
+.openclaw/
+temp/
+raw/
+memory/raw/
+*.bak
+*.bak.*
+archive-memory.log
+
+# large / generated
+memory/logs/
+
+# secrets / local noise
+.env
+.DS_Store
