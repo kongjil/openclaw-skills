@@ -11,6 +11,7 @@ Unified monorepo for OpenClaw skills and related tooling.
 | `qqbot` | qqbot日志等位置隐私加强+修复文件发送问题。 | [README (EN)](skills/qqbot/README.md) · [README (ZH)](skills/qqbot/README.zh.md) |
 | `openwrt-telegram-send-files-fix` | Telegram 文件发送修复方案与技能集合 | [README](skills/openwrt-telegram-send-files-fix/README.md) |
 | `code-moment-codex-switch` | 代码时刻：检测编码/部署任务后切入 Codex 工作流。 | [README](skills/code-moment-codex-switch/README.md) · [SKILL](skills/code-moment-codex-switch/SKILL.md) |
+| `restart-report-recovery` | 重启后自动补汇报：登记 pending、恢复扫描、完成后关闭。 | [SKILL](skills/restart-report-recovery/SKILL.md) |
 
 ## Directory Layout
 
@@ -41,4 +42,10 @@ curl -fsSL https://raw.githubusercontent.com/kongjil/openclaw-skills/main/instal
 ### code-moment-codex-switch / 代码时刻
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kongjil/openclaw-skills/main/install-code-moment-codex-switch.sh | bash
+```
+
+
+### restart-report-recovery / 重启补汇报
+```bash
+curl -fsSL https://raw.githubusercontent.com/kongjil/openclaw-skills/main/install-restart-report-recovery.sh | bash
 ```
