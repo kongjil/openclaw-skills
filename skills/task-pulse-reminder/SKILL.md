@@ -1,6 +1,6 @@
 ---
 name: auto-work-task-reminder
-description: Command-style work watchdog for OpenClaw. Detects idle work, low-intensity fake progress, and rhetoric-only replies; reminds only when real progress evidence is missing. / 命令式自动工作督办：检测挂机、低强度假推进、纯话术回复；只有缺少真实推进证据时才严肃提醒。
+description: Command-style work watchdog for OpenClaw. Use not only when the user explicitly asks to be reminded, but also for long code tasks, front-end/back-end localization, multi-file refactors, build/test/verify loops, remote execution, and any task where execution quality must be watched. Detects idle work, low-intensity fake progress, and rhetoric-only replies; reminds only when real progress evidence is missing. / 命令式自动工作督办：不仅用于用户显式要求提醒，也用于长代码任务、前后端汉化、多文件改动、build/test/verify 循环、远端执行、以及任何需要盯执行质量的任务。检测挂机、低强度假推进、纯话术回复；只有缺少真实推进证据时才严肃提醒。
 ---
 
 # Auto-Work (Task-Reminder) / 自动工作
@@ -27,6 +27,11 @@ description: Command-style work watchdog for OpenClaw. Detects idle work, low-in
 - 用户明确表示不接受“继续中/处理中/我再看看”
 - 需要识别 **假工作态 / 话术型拖延 / 滚刀肉式保活**
 - 需要在代码、部署、排障、改配置、长任务中做严肃督办
+- **长代码任务**（预计超过 5–10 分钟）
+- **前端/后端汉化、本地化、文案批量替换**
+- **多文件联动修改、重构、批量修复**
+- **需要 build / test / lint / verify 的迭代任务**
+- **远端灵机执行任务，需要防止空转或假汇报**
 
 不适用于：
 - 纯闲聊
