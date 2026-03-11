@@ -346,6 +346,34 @@ description: "代码时刻切模型：当用户要改代码/写项目/重构/修
 
 ---
 
+## 8.1 代码时刻里的关键排障经验：先查运行时边界，不要只盯源码
+
+当任务表现为“源码里看着没问题，但真实运行链路报文件不存在 / 行为不一致 / probe 不生效”时，优先按下面顺序排：
+
+1. **先看在线进程，不要只看 src**
+   - 查当前 `MainPID`
+   - 查 `ExecStart`
+   - 查 `/proc/$pid/cwd`
+   - 确认服务跑的是 `dist`、`node_modules`，还是你刚改过的源码路径
+
+2. **遇到绝对路径 `File not found`，先怀疑 workspace root，不要先怀疑文件丢了**
+   - 先看 `agents.defaults.workspace`
+   - 再看目标文件是否真的在该 workspace root 子树内
+   - 如果目标文件在 repo 根，但 agent workspace 还指向 `~/.openclaw/workspace`，真实 edit/read 很可能会被工作区边界拦住
+
+3. **源码 / dist / node_modules 三层都要查**
+   - 单测可能走最新 `src`
+   - systemd 在线服务可能跑旧 `dist`
+   - 真正工具实现也可能在 `node_modules` 的编译产物里
+   - 不要因为“我刚在 src 打了 probe”就假设真实请求一定会经过那里
+
+4. **看到 `File not found` 后，复现一次同路径 edit/read，观察错误是否升级**
+   - 如果修完 workspace root 后，错误从 `File not found` 变成 `Could not find the exact text...` 或其他更具体错误，通常说明“路径边界问题已经修掉了”
+
+5. **对 OpenClaw 特别重要的一条**
+   - host edit/read 会受 agent workspace root 约束
+   - 所以改仓库代码时，`agents.defaults.workspace` 最好直接指向真实仓库根，而不是一个更窄的默认工作区
+
 ## 9) 兜底
 
 若 subagent spawning 不可用：
