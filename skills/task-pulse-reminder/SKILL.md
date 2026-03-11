@@ -25,6 +25,7 @@ description: Command-style work watchdog for OpenClaw. Use not only when the use
 适用于：
 - 用户要“盯住任务”，但不接受空话回执
 - 用户明确表示不接受“继续中/处理中/我再看看”
+- 用户显式要求开启自动督办，例如：`autowork` / `auto work` / `auto-work` / “自动工作” / “自动督办” / “开监工” / “5分钟盯着” / “启用 autowork”
 - 需要识别 **假工作态 / 话术型拖延 / 滚刀肉式保活**
 - 需要在代码、部署、排障、改配置、长任务中做严肃督办
 - **长代码任务**（预计超过 5–10 分钟）
@@ -47,6 +48,28 @@ description: Command-style work watchdog for OpenClaw. Use not only when the use
 - `schedule.expr: "*/5 * * * *"`
 - `schedule.tz: "Asia/Shanghai"`
 - name: `自动工作-严肃督办`
+
+### Explicit trigger hard rule / 显式触发硬规则
+若用户明确说出以下任一表达：
+- `autowork`
+- `auto work`
+- `auto-work`
+- “自动工作”
+- “自动督办”
+- “开监工”
+- “5分钟盯着”
+- “启用 autowork” / “开启 autowork” / “现在立刻开自动工作”
+
+则主会话**不得只口头答应**，必须立刻把它落实成工具动作：
+1. 先 `cron.list` 检查是否已有启用中的 `自动工作-严肃督办`
+2. 若已存在，则**复用**并明确回执 jobId
+3. 若不存在，则**立即 `cron.add` 创建**
+4. 创建/复用后再继续原任务
+
+硬规则：
+- **“启用 autowork” 不是建议，而是必须落成 cron 动作的显式指令。**
+- 不得把它仅理解为“继续做任务更认真一点”。
+- 不得只回复“已开启/我会盯着”，却没有实际 `cron` 工具调用。
 
 建议 event 文本（直接可用）：
 
