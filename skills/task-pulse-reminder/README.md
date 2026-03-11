@@ -29,6 +29,7 @@ bash install-task-pulse-reminder.sh /path/to/.openclaw/workspace/skills
 - Treat **no evidence = no progress**
 - Detect fake progress, rhetoric loops, apology/promise-only replies
 - Stay silent when real work evidence exists
+- **When cross-agent history is available, check related subagent/codex session evidence before declaring “no progress”**
 - Escalate long stalled tasks into **recover-execution judgment**
 - Distinguish between:
   - recoverable stalled tasks
@@ -40,6 +41,7 @@ bash install-task-pulse-reminder.sh /path/to/.openclaw/workspace/skills
 - 执行 **无证据 = 无推进** 规则
 - 识别假推进、检讨书循环、只有认错/承诺的空转回复
 - 有真实推进证据时保持静默
+- **若已具备跨 agent 历史读取能力，督办前必须先检查相关 subagent/codex 子会话证据，再决定是否判定未推进**
 - 对长时间卡住的任务升级为**恢复执行判定**
 - 区分：
   - 可以恢复执行的断链任务
