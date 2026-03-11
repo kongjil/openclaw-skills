@@ -1,0 +1,5 @@
+auto-work = 对外统一产品入口
+- SKILL.md: 产品总纲
+- README.md: 用户说明
+- references/: 内部策略层
+- examples/: 触发与阻塞示例
