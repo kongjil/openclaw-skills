@@ -11,6 +11,7 @@ Unified monorepo for OpenClaw skills and related tooling.
 | `qqbot` | qqbot日志等位置隐私加强+修复文件发送问题。 | [README (EN)](skills/qqbot/README.md) · [README (ZH)](skills/qqbot/README.zh.md) |
 | `openwrt-telegram-send-files-fix` | Telegram 文件发送修复方案与技能集合 | [README](skills/openwrt-telegram-send-files-fix/README.md) |
 | `code-moment-codex-switch` | 代码时刻：检测编码/部署任务后切入 Codex 工作流，并可联动长任务督办与一次受控恢复。 | [README](skills/code-moment-codex-switch/README.md) · [SKILL](skills/code-moment-codex-switch/SKILL.md) |
+| `restart-report-recovery` | 重启后补汇报：为 gateway/systemd/docker/断链脚本登记 pending、落地 summary，并在重启后补发结果。 | [README](skills/restart-report-recovery/README.md) · [SKILL](skills/restart-report-recovery/SKILL.md) |
 
 ## Directory Layout
 
@@ -20,6 +21,7 @@ skills/
   qqbot/
   openwrt-telegram-send-files-fix/
   code-moment-codex-switch/
+  restart-report-recovery/
 ```
 
 ## Install Pattern
