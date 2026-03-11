@@ -347,6 +347,46 @@ description: "代码时刻切模型：当用户要改代码/写项目/重构/修
   - **督办失效**
   - **监督命中但执行未闭环**
 
+### 3.0M 执行型 auto-work（主会话 + 持续 worker + cron 兜底）
+当用户要求“做完才停 / 持续做 / 不要只监督 / 自动工作”，或任务本身属于长代码任务、多文件联动、build/test/verify 循环、远端灵机高挂机风险任务时，代码时刻必须从“监督型 auto-work”升级为“执行型 auto-work”。
+
+执行型 auto-work 的最低成立条件：
+1. **主会话 = orchestrator**
+   - 负责拆阶段、维护当前目标、对外汇报、断链接管
+2. **存在一个 active worker / workbench 子会话**
+   - 持续承担 patch → verify → diagnose → patch 的工程循环
+3. **存在一个 watchdog cron**
+   - 只负责抓断链、低强度、空启动和续跑缺失，不得充当主施工节拍器
+
+硬规则：
+- **只有 cron、没有 active worker，不算真正进入执行型 auto-work。**
+- 主会话创建/复用 cron 后，必须立刻启动或确认一个关联 worker；否则属于错误执行。
+- worker 应优先使用持久 session；若运行环境不适合持久 session，也必须在每次 finished 后由主会话立即续跑下一轮。
+- worker 的职责不是聊天，而是持续产生真实工程证据：`read / edit / write / exec / process / verify`。
+- 主会话不得在 worker finished 后默认停在“等用户验收”；若总目标仍有剩余项，必须立即续跑。
+
+推荐的 worker 固定循环：
+- patch
+- verify
+- diagnose
+- patch
+- 阶段摘要（修改文件 / 验证结果 / 卡点 / 下一步）
+
+断链恢复规则：
+- cron 命中后，主会话必须先检查 worker 最近窗口内的真实证据
+- 若 worker 有新工具动作 / 文件改动 / 验证结果，则视为继续工作中
+- 若 worker 无历史 / 无动作 / 无输出，则判定为空启动，必须立即重发或接手
+- 若 worker 已 finished 但 remaining_scope 非空，则判定为续跑缺失，必须立即续跑
+- 若 worker 只在督办后短暂动作、随后再次停工，则判定为脉冲式施工，必须恢复到下一轮 patch / verify
+
+执行型 auto-work 的对外回执要求：
+- 不得只说“已开启自动工作”
+- 应明确至少这几项：
+  - 督办任务名 / job 复用情况
+  - 关联 worker 标识（sessionKey 或 label）
+  - 当前阶段
+  - 验收标准或剩余范围
+
 ### 3.1 默认执行策略
 若代码任务长时间无新证据，且 `task-pulse-reminder` 已经把状态升级为“恢复执行判定”，代码时刻**只允许一次受控恢复尝试**，不得无限自动重开工作台。
 
