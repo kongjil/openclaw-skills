@@ -10,11 +10,7 @@ It detects idle work, fake progress, rhetoric-only replies, and long stalled exe
 它会识别挂机、假推进、纯话术回复，以及长时间断链空转；必要时会从证据检测升级到**恢复执行判定**。
 
 ## Install / 安装
-```bash
-curl -fsSL https://raw.githubusercontent.com/kongjil/openclaw-skills/main/install-auto-work-task-reminder.sh | bash
-```
-
-(仓库内脚本方式)
+本地仓库脚本方式：
 ```bash
 bash install-task-pulse-reminder.sh
 ```
@@ -23,6 +19,8 @@ Custom skills directory / 自定义安装目录：
 ```bash
 bash install-task-pulse-reminder.sh /path/to/.openclaw/workspace/skills
 ```
+
+如果你要从 Git 仓库或原始文件链接分发，请把安装脚本地址替换成**你自己的公开仓库地址**，不要依赖示例中的私人仓库链接。
 
 ## What this skill does / 技能能力
 - Create a recurring 5-minute watchdog cron job
@@ -51,6 +49,10 @@ bash install-task-pulse-reminder.sh /path/to/.openclaw/workspace/skills
 
 ## Default schedule / 默认频率
 - Every 5 minutes (`*/5 * * * *`)
+
+## Time zone / 时区
+- Prefer the user/session time zone when known
+- Otherwise use the host or workspace default time zone consistently
 
 ## Repository structure / 仓库结构
 - `skill/task-pulse-reminder/SKILL.md`

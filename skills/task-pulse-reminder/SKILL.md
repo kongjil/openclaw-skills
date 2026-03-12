@@ -46,7 +46,7 @@ description: Command-style work watchdog for OpenClaw. Use not only when the use
 - `payload.kind: "systemEvent"`
 - `schedule.kind: "cron"`
 - `schedule.expr: "*/5 * * * *"`
-- `schedule.tz: "Asia/Shanghai"`
+- `schedule.tz: "<user-session-tz-or-host-default>"`
 - name: `自动工作-严肃督办`
 
 ### Explicit trigger hard rule / 显式触发硬规则
