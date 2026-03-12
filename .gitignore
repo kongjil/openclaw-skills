@@ -10,3 +10,8 @@ skills/openwrt-telegram-send-files-fix/scripts/backup-plan*.conf
 skills/openwrt-telegram-send-files-fix/TOOLS.md
 skills/openwrt-telegram-send-files-fix/AGENTS.md
 skills/openwrt-telegram-send-files-fix/USER.md
+temp/
+**/__pycache__/
+memory/*.jsonl
+memory/*.log
+runtime-alerts/
