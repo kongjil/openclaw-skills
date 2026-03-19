@@ -10,7 +10,7 @@ Unified monorepo for OpenClaw skills and related tooling.
 | `auto-work` | 统一自动工作入口：对外替代旧的 code-moment / task-pulse 心智，内部决定监督型还是执行型。 | [README](skills/auto-work/README.md) · [SKILL](skills/auto-work/SKILL.md) |
 | `qqbot` | qqbot日志等位置隐私加强+修复文件发送问题。 | [README (EN)](skills/qqbot/README.md) · [README (ZH)](skills/qqbot/README.zh.md) |
 | `openwrt-telegram-send-files-fix` | Telegram 文件发送修复方案与技能集合 | [README](skills/openwrt-telegram-send-files-fix/README.md) |
-| `restart-report-recovery` | 重启后补汇报：为 gateway/systemd/docker/断链脚本登记 pending、落地 summary，并在重启后补发结果。 | [README](skills/restart-report-recovery/README.md) · [SKILL](skills/restart-report-recovery/SKILL.md) |
+| `restart-report-recovery` | 重启后补汇报：为 gateway/systemd/docker/断链脚本登记 pending、落地 summary，并在重启后补发结果。 | [SKILL](skills/restart-report-recovery/SKILL.md) |
 
 ## Recent hard-won lesson / 最近新增经验
 
