@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  gateway-restart-safe.sh <taskId> <summaryPath> <brief> [--delay-sec N] [--dry-run]
+  gateway-restart-safe.sh <taskId> <summaryPath> <brief> [--delay-sec N] [--target-session-key KEY] [--target-channel CHANNEL] [--target-to TO] [--dry-run]
 
 Behavior:
   1) register pending
@@ -25,10 +25,25 @@ shift 3
 
 delay_sec=12
 dry_run=0
+target_session_key=""
+target_channel=""
+target_to=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --delay-sec)
       delay_sec="${2:-}"
+      shift 2
+      ;;
+    --target-session-key)
+      target_session_key="${2:-}"
+      shift 2
+      ;;
+    --target-channel)
+      target_channel="${2:-}"
+      shift 2
+      ;;
+    --target-to)
+      target_to="${2:-}"
       shift 2
       ;;
     --dry-run)
@@ -50,9 +65,25 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 register_script="$script_dir/register-pending.sh"
 mkdir -p "$(dirname "$summary_path")"
 
-bash "$register_script" "$task_id" "$summary_path" "$brief" ""
+resolve_workspace() {
+  if [ -n "${OPENCLAW_WORKSPACE:-}" ] && [ -d "$OPENCLAW_WORKSPACE" ]; then
+    echo "$OPENCLAW_WORKSPACE"
+    return
+  fi
+  if [ -d "$HOME/.openclaw/workspace" ]; then
+    echo "$HOME/.openclaw/workspace"
+    return
+  fi
+  echo "$(cd "$script_dir/../.." && pwd)"
+}
 
-postcheck_script="$(mktemp /tmp/openclaw-gateway-restart-postcheck.${task_id}.XXXXXX.sh)"
+workspace="$(resolve_workspace)"
+postcheck_dir="$workspace/tmp/restart-report-postcheck"
+mkdir -p "$postcheck_dir"
+
+bash "$register_script" "$task_id" "$summary_path" "$brief" "" "$target_session_key" "$target_channel" "$target_to"
+
+postcheck_script="$(mktemp "$postcheck_dir/openclaw-gateway-restart-postcheck.${task_id}.XXXXXX.sh")"
 cat > "$postcheck_script" <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -113,7 +144,7 @@ spawn_postcheck() {
 postcheck_handle="$(spawn_postcheck "$postcheck_script" "$task_id" "$summary_path" "$brief" "$delay_sec")"
 
 if [ "$dry_run" = "1" ]; then
-  echo "DRY_RUN registered=$task_id summary=$summary_path postcheck=$postcheck_handle delay=$delay_sec"
+  echo "DRY_RUN registered=$task_id summary=$summary_path postcheck=$postcheck_handle delay=$delay_sec targetSessionKey=$target_session_key targetChannel=$target_channel targetTo=$target_to"
   exit 0
 fi
 
@@ -121,3 +152,6 @@ systemctl restart openclaw-gateway.service
 printf 'REGISTERED %s\n' "$task_id"
 printf 'SUMMARY %s\n' "$summary_path"
 printf 'POSTCHECK %s\n' "$postcheck_handle"
+printf 'TARGET_SESSION_KEY %s\n' "$target_session_key"
+printf 'TARGET_CHANNEL %s\n' "$target_channel"
+printf 'TARGET_TO %s\n' "$target_to"

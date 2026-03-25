@@ -41,9 +41,14 @@ for r in rows:
     task = r.get('taskId','unknown')
     summary = r.get('summaryPath','')
     longrun = r.get('longrunName','')
+    target_session_key = r.get('targetSessionKey','')
+    target_channel = r.get('targetChannel','')
+    target_to = r.get('targetTo','')
+
+    suffix = f"\ttargetSessionKey={target_session_key}\ttargetChannel={target_channel}\ttargetTo={target_to}"
 
     if summary and os.path.exists(summary) and os.path.getsize(summary) > 0:
-        print(f"READY {task} {summary}")
+        print(f"READY {task} {summary}{suffix}")
         continue
 
     running = False
@@ -57,7 +62,7 @@ for r in rows:
             running = False
 
     if running:
-        print(f"WAIT {task} longrun:{longrun}")
+        print(f"WAIT {task} longrun:{longrun}{suffix}")
     else:
-        print(f"WAIT {task} no-result")
+        print(f"WAIT {task} no-result{suffix}")
 PY

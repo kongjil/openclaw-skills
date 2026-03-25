@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [ "$#" -lt 3 ]; then
-  echo "Usage: $0 <taskId> <summaryPath> <brief> [longrunName]" >&2
+  echo "Usage: $0 <taskId> <summaryPath> <brief> [longrunName] [targetSessionKey] [targetChannel] [targetTo]" >&2
   exit 2
 fi
 
@@ -28,15 +28,21 @@ task_id="$1"
 summary_path="$2"
 brief="$3"
 longrun_name="${4:-}"
+target_session_key="${5:-}"
+target_channel="${6:-}"
+target_to="${7:-}"
 
-python3 - "$state_file" "$task_id" "$summary_path" "$brief" "$longrun_name" <<'PY'
+python3 - "$state_file" "$task_id" "$summary_path" "$brief" "$longrun_name" "$target_session_key" "$target_channel" "$target_to" <<'PY'
 import json,sys,time
-state_file,task_id,summary_path,brief,longrun_name = sys.argv[1:6]
+state_file,task_id,summary_path,brief,longrun_name,target_session_key,target_channel,target_to = sys.argv[1:9]
 obj = {
   "taskId": task_id,
   "summaryPath": summary_path,
   "brief": brief,
   "longrunName": longrun_name,
+  "targetSessionKey": target_session_key,
+  "targetChannel": target_channel,
+  "targetTo": target_to,
   "status": "pending",
   "createdAt": int(time.time()),
   "closedAt": None,

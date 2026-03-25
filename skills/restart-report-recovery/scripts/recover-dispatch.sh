@@ -15,11 +15,9 @@ resolve_workspace() {
 
 workspace="$(resolve_workspace)"
 recover_script="$workspace/skills/restart-report-recovery/scripts/recover-pending.sh"
-close_script="$workspace/skills/restart-report-recovery/scripts/close-pending.sh"
 state_file="$workspace/memory/restart-report-pending.jsonl"
 
 [ -x "$recover_script" ] || { echo "MISSING_RECOVER_SCRIPT $recover_script"; exit 1; }
-[ -x "$close_script" ] || { echo "MISSING_CLOSE_SCRIPT $close_script"; exit 1; }
 [ -f "$state_file" ] || exit 0
 
 mapfile -t lines < <(bash "$recover_script")
@@ -32,10 +30,26 @@ for line in "${lines[@]}"; do
     READY\ *)
       rest="${line#READY }"
       task_id="${rest%% *}"
-      summary_path="${rest#* }"
+      rest="${rest#* }"
+      summary_path="${rest%%$'\t'*}"
+      meta=""
+      if [[ "$rest" == *$'\t'* ]]; then
+        meta="${rest#*$'\t'}"
+      fi
       [ -f "$summary_path" ] || continue
-      if [ ! -s "$summary_path" ]; then
-        continue
+      [ -s "$summary_path" ] || continue
+
+      target_session_key=""
+      target_channel=""
+      target_to=""
+      if [ -n "$meta" ]; then
+        while IFS= read -r field; do
+          case "$field" in
+            targetSessionKey=*) target_session_key="${field#targetSessionKey=}" ;;
+            targetChannel=*) target_channel="${field#targetChannel=}" ;;
+            targetTo=*) target_to="${field#targetTo=}" ;;
+          esac
+        done < <(printf '%s\n' "$meta" | tr '\t' '\n')
       fi
 
       summary_content="$(python3 - "$summary_path" <<'PY'
@@ -49,15 +63,17 @@ if len(txt) > limit:
 print(txt, end='')
 PY
 )"
+      [ -n "$summary_content" ] || continue
 
-      if [ -n "$summary_content" ]; then
-        if [ $printed -eq 1 ]; then
-          printf '\n\n'
-        fi
-        printf '重启后补汇报：任务 %s 已完成。\n\n%s\n' "$task_id" "$summary_content"
-        printed=1
-        bash "$close_script" "$task_id" >/dev/null 2>&1 || true
-      fi
+      [ "$printed" -eq 0 ] || printf '\n\n'
+      printf 'READY_RESULT\n'
+      printf 'taskId=%s\n' "$task_id"
+      printf 'summaryPath=%s\n' "$summary_path"
+      printf 'targetSessionKey=%s\n' "$target_session_key"
+      printf 'targetChannel=%s\n' "$target_channel"
+      printf 'targetTo=%s\n' "$target_to"
+      printf -- '---SUMMARY-BEGIN---\n%s\n---SUMMARY-END---\n' "$summary_content"
+      printed=1
       ;;
     *)
       ;;
