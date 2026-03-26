@@ -1,10 +1,11 @@
 {
-  "name": "@sliverp/qqbot",
-  "version": "1.5.4",
+  "name": "@tencent-connect/openclaw-qqbot",
+  "version": "1.6.5",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
+    "openclaw-qqbot": "./bin/qqbot-cli.js",
     "qqbot": "./bin/qqbot-cli.js"
   },
   "files": [
@@ -12,31 +13,26 @@
     "bin",
     "src",
     "skills",
+    "scripts",
     "index.ts",
     "tsconfig.json",
-    "openclaw.plugin.json",
-    "clawdbot.plugin.json",
-    "moltbot.plugin.json"
+    "openclaw.plugin.json"
   ],
-  "clawdbot": {
-    "extensions": [
-      "./index.ts"
-    ]
-  },
-  "moltbot": {
-    "extensions": [
-      "./index.ts"
-    ]
-  },
   "openclaw": {
+    "id": "openclaw-qqbot",
     "extensions": [
-      "./index.ts"
-    ]
+      "./dist/index.js"
+    ],
+    "channel": {
+      "id": "qqbot",
+      "label": "QQ Bot"
+    }
   },
   "scripts": {
     "build": "tsc || true",
     "dev": "tsc --watch",
-    "prepack": "npm install --omit=dev"
+    "prepack": "npm install --omit=dev",
+    "postinstall": "node scripts/postinstall-link-sdk.js 2>/dev/null || true"
   },
   "dependencies": {
     "mpg123-decoder": "^1.0.3",
@@ -54,11 +50,13 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "clawdbot": "*",
-    "moltbot": "*",
     "openclaw": "*"
   },
-  "homepage": "https://github.com/sliverp/qqbot",
+  "homepage": "https://github.com/tencent-connect/openclaw-qqbot",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tencent-connect/openclaw-qqbot.git"
+  },
   "bundleDependencies": [
     "mpg123-decoder",
     "silk-wasm",

@@ -53,6 +53,54 @@ export interface QQBotAccountConfig {
    * 统一管理入站（STT）和出站（上传）的音频格式转换行为
    */
   audioFormatPolicy?: AudioFormatPolicy;
+  /**
+   * 是否启用公网 URL 直传 QQ 平台（默认 true）
+   * 启用时：公网 URL 先直传给 QQ 开放平台的富媒体 API，平台自行拉取；失败后自动 fallback 到插件下载再 Base64 上传
+   * 禁用时：公网 URL 始终由插件先下载到本地，再以 Base64 上传（适用于 QQ 平台无法访问目标 URL 的场景）
+   */
+  urlDirectUpload?: boolean;
+  /**
+   * /bot-upgrade 指令返回的升级指引网址
+   * 默认: https://doc.weixin.qq.com/doc/w3_AKEAGQaeACgCNHrh1CbHzTAKtT2gB?scode=AJEAIQdfAAozxFEnLZAKEAGQaeACg
+   */
+  upgradeUrl?: string;
+  /**
+   * /bot-upgrade 指令的行为模式
+   * - "doc"：展示升级文档链接（默认，安全模式）
+   * - "hot-reload"：检测到新版本时直接执行 npm 升级脚本进行热更新
+   */
+  upgradeMode?: "doc" | "hot-reload";
+  /**
+   * 出站消息合并回复（debounce）配置
+   * 当短时间内收到多次 deliver 时，将文本合并为一条消息发送，避免消息轰炸
+   */
+  deliverDebounce?: DeliverDebounceConfig;
+}
+
+/**
+ * 出站消息合并回复配置
+ */
+export interface DeliverDebounceConfig {
+  /**
+   * 是否启用合并回复（默认 true）
+   */
+  enabled?: boolean;
+  /**
+   * 合并窗口时长（毫秒），在此时间内的连续 deliver 会被合并
+   * 默认 1500ms
+   */
+  windowMs?: number;
+  /**
+   * 最大等待时长（毫秒），从第一条 deliver 开始计算，超过此时间强制发送
+   * 防止持续有新 deliver 导致一直不发送
+   * 默认 8000ms
+   */
+  maxWaitMs?: number;
+  /**
+   * 合并文本之间的分隔符
+   * 默认 "\n\n---\n\n"
+   */
+  separator?: string;
 }
 
 /**
@@ -72,6 +120,12 @@ export interface AudioFormatPolicy {
    * 仅当需要覆盖默认值时才配置此项
    */
   uploadDirectFormats?: string[];
+  /**
+   * 是否启用语音转码（默认 true）
+   * 设为 false 可在环境无 ffmpeg 时跳过转码，直接以文件形式发送
+   * 当禁用时，非原生格式的音频会 fallback 到 sendDocument（文件发送）
+   */
+  transcodeEnabled?: boolean;
 }
 
 /**
@@ -85,6 +139,7 @@ export interface MessageAttachment {
   size?: number;
   url: string;
   voice_wav_url?: string;  // QQ 提供的 WAV 格式语音直链，有值时优先使用以避免 SILK→WAV 转换
+  asr_refer_text?: string; // QQ 事件内置 ASR 语音识别文本
 }
 
 /**
@@ -101,6 +156,8 @@ export interface C2CMessageEvent {
   timestamp: string;
   message_scene?: {
     source: string;
+    /** ext 数组，可能包含 ref_msg_idx=REFIDX_xxx（引用的消息）和 msg_idx=REFIDX_xxx（自身索引） */
+    ext?: string[];
   };
   attachments?: MessageAttachment[];
 }
@@ -139,6 +196,10 @@ export interface GroupMessageEvent {
   timestamp: string;
   group_id: string;
   group_openid: string;
+  message_scene?: {
+    source: string;
+    ext?: string[];
+  };
   attachments?: MessageAttachment[];
 }
 
