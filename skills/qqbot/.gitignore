@@ -6,6 +6,3 @@ package-lock.json
 .codebuddy/
 .codebuddy.zip
 openclaw.json
-*.tgz
-*.log
-pnpm-lock.yaml

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * qqbot CLI - 用于升级和管理 qqbot 插件
+ * QQBot CLI - 用于升级和管理 QQBot 插件
  * 
  * 用法:
- *   npx openclaw-qqbot upgrade    # 升级插件
- *   npx openclaw-qqbot install    # 安装插件
+ *   npx @sliverp/qqbot upgrade    # 升级插件
+ *   npx @sliverp/qqbot install    # 安装插件
  */
 
 import { execSync } from 'child_process';
@@ -35,22 +35,18 @@ function detectInstallation() {
   return null;
 }
 
-// 需要清理的所有可能的插件 ID / 包名（原仓库 + 本仓库 + 框架推断名）
-const PLUGIN_IDS = ['qqbot', 'openclaw-qq', '@sliverp/qqbot', '@tencent-connect/openclaw-qq', '@tencent-connect/qqbot', '@tencent-connect/openclaw-qqbot', 'openclaw-qqbot'];
-// 可能的扩展目录名
-const EXTENSION_DIR_NAMES = ['qqbot', 'openclaw-qq', 'openclaw-qqbot'];
-
 // 清理旧版本插件，返回旧的 qqbot 配置
 function cleanupInstallation(appName) {
   const home = homedir();
   const appDir = join(home, `.${appName}`);
   const configFile = join(appDir, `${appName}.json`);
+  const extensionDir = join(appDir, 'extensions', 'qqbot');
 
   let oldQqbotConfig = null;
 
   console.log(`\n>>> 处理 ${appName} 安装...`);
 
-  // 1. 先读取旧的 qqbot 配置（尝试所有可能的 channel key）
+  // 1. 先读取旧的 qqbot 配置
   if (existsSync(configFile)) {
     try {
       const config = JSON.parse(readFileSync(configFile, 'utf8'));
@@ -63,48 +59,36 @@ function cleanupInstallation(appName) {
     }
   }
 
-  // 2. 删除所有可能的旧扩展目录
-  for (const dirName of EXTENSION_DIR_NAMES) {
-    const extensionDir = join(appDir, 'extensions', dirName);
-    if (existsSync(extensionDir)) {
-      console.log(`删除旧版本插件: ${extensionDir}`);
-      rmSync(extensionDir, { recursive: true, force: true });
-    }
+  // 2. 删除旧的扩展目录
+  if (existsSync(extensionDir)) {
+    console.log(`删除旧版本插件: ${extensionDir}`);
+    rmSync(extensionDir, { recursive: true, force: true });
+  } else {
+    console.log('未找到旧版本插件目录，跳过删除');
   }
 
-  // 3. 清理配置文件中所有可能的插件 ID 相关字段
+  // 3. 清理配置文件中的 qqbot 相关字段
   if (existsSync(configFile)) {
-    console.log('清理配置文件中的插件字段...');
+    console.log('清理配置文件中的 qqbot 字段...');
     try {
       const config = JSON.parse(readFileSync(configFile, 'utf8'));
 
-      for (const id of PLUGIN_IDS) {
-        // 删除 channels.<id>
-        if (config.channels?.[id]) {
-          delete config.channels[id];
-          console.log(`  - 已删除 channels.${id}`);
-        }
+      // 删除 channels.qqbot
+      if (config.channels?.qqbot) {
+        delete config.channels.qqbot;
+        console.log('  - 已删除 channels.qqbot');
+      }
 
-        // 删除 plugins.entries.<id>
-        if (config.plugins?.entries?.[id]) {
-          delete config.plugins.entries[id];
-          console.log(`  - 已删除 plugins.entries.${id}`);
-        }
+      // 删除 plugins.entries.qqbot
+      if (config.plugins?.entries?.qqbot) {
+        delete config.plugins.entries.qqbot;
+        console.log('  - 已删除 plugins.entries.qqbot');
+      }
 
-        // 删除 plugins.installs.<id>
-        if (config.plugins?.installs?.[id]) {
-          delete config.plugins.installs[id];
-          console.log(`  - 已删除 plugins.installs.${id}`);
-        }
-
-        // 删除 plugins.allow 中的 <id>
-        if (Array.isArray(config.plugins?.allow)) {
-          const before = config.plugins.allow.length;
-          config.plugins.allow = config.plugins.allow.filter((x) => x !== id);
-          if (config.plugins.allow.length !== before) {
-            console.log(`  - 已删除 plugins.allow.${id}`);
-          }
-        }
+      // 删除 plugins.installs.qqbot
+      if (config.plugins?.installs?.qqbot) {
+        delete config.plugins.installs.qqbot;
+        console.log('  - 已删除 plugins.installs.qqbot');
       }
 
       writeFileSync(configFile, JSON.stringify(config, null, 2));
@@ -131,7 +115,7 @@ function runCommand(cmd, args = []) {
 
 // 升级命令
 function upgrade() {
-  console.log('=== qqbot 插件升级脚本 ===');
+  console.log('=== QQBot 插件升级脚本 ===');
 
   let foundInstallation = null;
   let savedConfig = null;
@@ -160,7 +144,7 @@ function upgrade() {
 
   // 自动安装插件
   console.log('\n[1/2] 安装新版本插件...');
-  runCommand(foundInstallation, ['plugins', 'install', 'openclaw-qqbot']);
+  runCommand(foundInstallation, ['plugins', 'install', '@sliverp/qqbot']);
 
   // 自动配置通道（使用保存的 appId 和 clientSecret）
   console.log('\n[2/2] 配置机器人通道...');
@@ -175,7 +159,7 @@ function upgrade() {
     }
   } else {
     console.log('未找到已保存的 qqbot 配置，请手动配置:');
-    console.log(`  ${foundInstallation} channels add --channel qqbot --token "appid:appsecret"`);
+    console.log(`  ${foundInstallation} channels add --channel qqbot --token "AppID:AppSecret"`);
     return;
   }
 
@@ -186,7 +170,7 @@ function upgrade() {
 
 // 安装命令
 function install() {
-  console.log('=== qqbot 插件安装 ===');
+  console.log('=== QQBot 插件安装 ===');
 
   const cmd = detectInstallation();
   if (!cmd) {
@@ -196,28 +180,28 @@ function install() {
   }
 
   console.log(`\n使用 ${cmd} 安装插件...`);
-  runCommand(cmd, ['plugins', 'install', '@tencent-connect/openclaw-qqbot']);
+  runCommand(cmd, ['plugins', 'install', '@sliverp/qqbot']);
 
   console.log('\n=== 安装完成 ===');
   console.log('\n请配置机器人通道:');
-  console.log(`  ${cmd} channels add --channel qqbot --token "appid:appsecret"`);
+  console.log(`  ${cmd} channels add --channel qqbot --token "AppID:AppSecret"`);
 }
 
 // 显示帮助
 function showHelp() {
   console.log(`
-qqbot CLI - QQ机器人插件管理工具
+QQBot CLI - QQ机器人插件管理工具
 
 用法:
-  npx openclaw-qqbot <命令>
+  npx @sliverp/qqbot <命令>
 
 命令:
   upgrade       清理旧版本插件（升级前执行）
   install       安装插件到 openclaw/clawdbot
 
 示例:
-  npx openclaw-qqbot upgrade
-  npx openclaw-qqbot install
+  npx @sliverp/qqbot upgrade
+  npx @sliverp/qqbot install
 `);
 }
 

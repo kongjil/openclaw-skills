@@ -7,11 +7,6 @@ interface QQBotChannelConfig extends QQBotAccountConfig {
   accounts?: Record<string, QQBotAccountConfig>;
 }
 
-function normalizeAppId(raw: unknown): string {
-  if (raw === null || raw === undefined) return "";
-  return String(raw).trim();
-}
-
 /**
  * 列出所有 QQBot 账户 ID
  */
@@ -83,12 +78,12 @@ export function resolveQQBotAccount(
       imageServerBaseUrl: qqbot?.imageServerBaseUrl,
       markdownSupport: qqbot?.markdownSupport ?? true,
     };
-    appId = normalizeAppId(qqbot?.appId);
+    appId = qqbot?.appId ?? "";
   } else {
     // 命名账户从 accounts 读取
     const account = qqbot?.accounts?.[resolvedAccountId];
     accountConfig = account ?? {};
-    appId = normalizeAppId(account?.appId);
+    appId = account?.appId ?? "";
   }
 
   // 解析 clientSecret
@@ -105,7 +100,7 @@ export function resolveQQBotAccount(
 
   // AppId 也可以从环境变量读取
   if (!appId && process.env.QQBOT_APP_ID && resolvedAccountId === DEFAULT_ACCOUNT_ID) {
-    appId = normalizeAppId(process.env.QQBOT_APP_ID);
+    appId = process.env.QQBOT_APP_ID;
   }
 
   return {

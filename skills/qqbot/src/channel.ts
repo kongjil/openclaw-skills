@@ -12,20 +12,39 @@ import { sendText, sendMedia } from "./outbound.js";
 import { startGateway } from "./gateway.js";
 import { qqbotOnboardingAdapter } from "./onboarding.js";
 import { getQQBotRuntime } from "./runtime.js";
-import { saveCredentialBackup, loadCredentialBackup } from "./credential-backup.js";
-import { initApiConfig } from "./api.js";
-
-/** QQ Bot 单条消息文本长度上限 */
-export const TEXT_CHUNK_LIMIT = 5000;
 
 /**
- * Markdown 感知的文本分块函数
- * 委托给 SDK 内置的 channel.text.chunkMarkdownText
- * 支持代码块自动关闭/重开、括号感知等
+ * 简单的文本分块函数
+ * 用于预先分块长文本
  */
-export function chunkText(text: string, limit: number): string[] {
-  const runtime = getQQBotRuntime();
-  return runtime.channel.text.chunkMarkdownText(text, limit);
+function chunkText(text: string, limit: number): string[] {
+  if (text.length <= limit) return [text];
+  
+  const chunks: string[] = [];
+  let remaining = text;
+  
+  while (remaining.length > 0) {
+    if (remaining.length <= limit) {
+      chunks.push(remaining);
+      break;
+    }
+    
+    // 尝试在换行处分割
+    let splitAt = remaining.lastIndexOf("\n", limit);
+    if (splitAt <= 0 || splitAt < limit * 0.5) {
+      // 没找到合适的换行，尝试在空格处分割
+      splitAt = remaining.lastIndexOf(" ", limit);
+    }
+    if (splitAt <= 0 || splitAt < limit * 0.5) {
+      // 还是没找到，强制在 limit 处分割
+      splitAt = limit;
+    }
+    
+    chunks.push(remaining.slice(0, splitAt));
+    remaining = remaining.slice(splitAt).trimStart();
+  }
+  
+  return chunks;
 }
 
 export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
@@ -47,16 +66,28 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
      * blockStreaming: true 表示该 Channel 支持块流式
      * 框架会收集流式响应，然后通过 deliver 回调发送
      */
-    blockStreaming: true,
+    blockStreaming: false,
   },
   reload: { configPrefixes: ["channels.qqbot"] },
   // CLI onboarding wizard
   onboarding: qqbotOnboardingAdapter,
 
   config: {
-    listAccountIds: (cfg) => listQQBotAccountIds(cfg),
-    resolveAccount: (cfg, accountId) => resolveQQBotAccount(cfg, accountId),
-    defaultAccountId: (cfg) => resolveDefaultQQBotAccountId(cfg),
+    listAccountIds: (cfg) => {
+      const ids = listQQBotAccountIds(cfg);
+      console.log(`[qqbot:channel] listAccountIds: ${JSON.stringify(ids)}`);
+      return ids;
+    },
+    resolveAccount: (cfg, accountId) => {
+      const account = resolveQQBotAccount(cfg, accountId);
+      console.log(`[qqbot:channel] resolveAccount: input=${accountId} → resolved=${account.accountId}, appId=${account.appId}, enabled=${account.enabled}`);
+      return account;
+    },
+    defaultAccountId: (cfg) => {
+      const id = resolveDefaultQQBotAccountId(cfg);
+      console.log(`[qqbot:channel] defaultAccountId: ${id}`);
+      return id;
+    },
     // 新增：设置账户启用状态
     setAccountEnabled: ({ cfg, accountId, enabled }) =>
       setAccountEnabledInConfigSection({
@@ -74,12 +105,7 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
         accountId,
         clearBaseFields: ["appId", "clientSecret", "clientSecretFile", "name"],
       }),
-    isConfigured: (account) => {
-      if (account?.appId && account?.clientSecret) return true;
-      // 配置为空但有凭证备份时仍返回 true，让 startAccount 有机会恢复凭证
-      const backup = loadCredentialBackup(account?.accountId);
-      return backup !== null;
-    },
+    isConfigured: (account) => Boolean(account?.appId && account?.clientSecret),
     describeAccount: (account) => ({
       accountId: account?.accountId ?? DEFAULT_ACCOUNT_ID,
       name: account?.name,
@@ -175,7 +201,7 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
         return `qqbot:c2c:${id}`;
       }
       
-      // 不认识的格式，返回 undefined 让核心使用原始值
+      // 不认识的格式，返回 undefined
       return undefined;
     },
     /**
@@ -216,14 +242,13 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
   },
   outbound: {
     deliveryMode: "direct",
-    chunker: (text, limit) => getQQBotRuntime().channel.text.chunkMarkdownText(text, limit),
+    chunker: chunkText,
     chunkerMode: "markdown",
-    textChunkLimit: 5000,
+    textChunkLimit: 2000,
     sendText: async ({ to, text, accountId, replyToId, cfg }) => {
       console.log(`[qqbot:channel] sendText called — accountId=${accountId}, to=${to}, replyToId=${replyToId}, text.length=${text?.length ?? 0}`);
       console.log(`[qqbot:channel] sendText text preview: ${text?.slice(0, 100)}${(text?.length ?? 0) > 100 ? "..." : ""}`);
       const account = resolveQQBotAccount(cfg, accountId);
-      initApiConfig({ markdownSupport: account.markdownSupport });
       console.log(`[qqbot:channel] sendText resolved account: id=${account.accountId}, appId=${account.appId}, enabled=${account.enabled}`);
       const result = await sendText({ to, text, accountId, replyToId, account });
       console.log(`[qqbot:channel] sendText result: messageId=${result.messageId}, error=${result.error ?? "none"}`);
@@ -236,7 +261,6 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
     sendMedia: async ({ to, text, mediaUrl, accountId, replyToId, cfg }) => {
       console.log(`[qqbot:channel] sendMedia called — accountId=${accountId}, to=${to}, replyToId=${replyToId}, mediaUrl=${mediaUrl?.slice(0, 80)}, text.length=${text?.length ?? 0}`);
       const account = resolveQQBotAccount(cfg, accountId);
-      initApiConfig({ markdownSupport: account.markdownSupport });
       console.log(`[qqbot:channel] sendMedia resolved account: id=${account.accountId}, appId=${account.appId}, enabled=${account.enabled}`);
       const result = await sendMedia({ to, text: text ?? "", mediaUrl: mediaUrl ?? "", accountId, replyToId, account });
       console.log(`[qqbot:channel] sendMedia result: messageId=${result.messageId}, error=${result.error ?? "none"}`);
@@ -249,30 +273,7 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
   },
   gateway: {
     startAccount: async (ctx) => {
-      let { account } = ctx;
-      const { abortSignal, log, cfg } = ctx;
-
-      // 凭证恢复：如果 appId/secret 为空（热更新打断可能导致配置丢失），尝试从暂存文件恢复
-      if (!account.appId || !account.clientSecret) {
-        const backup = loadCredentialBackup(account.accountId);
-        if (backup) {
-          log?.info(`[qqbot:${account.accountId}] 配置中凭证为空，从暂存文件恢复 (appId=${backup.appId}, savedAt=${backup.savedAt})`);
-          try {
-            const runtime = getQQBotRuntime();
-            const restoredCfg = applyQQBotAccountConfig(cfg, account.accountId, {
-              appId: backup.appId,
-              clientSecret: backup.clientSecret,
-            });
-            const configApi = runtime.config as { writeConfigFile: (cfg: unknown) => Promise<void> };
-            await configApi.writeConfigFile(restoredCfg);
-            // 重新解析 account 以获取恢复后的值
-            account = resolveQQBotAccount(restoredCfg, account.accountId);
-            log?.info(`[qqbot:${account.accountId}] 凭证已恢复`);
-          } catch (e) {
-            log?.error(`[qqbot:${account.accountId}] 凭证恢复失败: ${e}`);
-          }
-        }
-      }
+      const { account, abortSignal, log, cfg } = ctx;
 
       log?.info(`[qqbot:${account.accountId}] Starting gateway — appId=${account.appId}, enabled=${account.enabled}, name=${account.name ?? "unnamed"}`);
       console.log(`[qqbot:channel] startAccount: accountId=${account.accountId}, appId=${account.appId}, secretSource=${account.secretSource}`);
@@ -284,8 +285,6 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
         log,
         onReady: () => {
           log?.info(`[qqbot:${account.accountId}] Gateway ready`);
-          // 启动成功，保存凭证快照供后续恢复使用
-          saveCredentialBackup(account.accountId, account.appId, account.clientSecret);
           ctx.setStatus({
             ...ctx.getStatus(),
             running: true,
